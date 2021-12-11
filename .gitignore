@@ -1,0 +1,7 @@
+.idea
+node_modules
+fonts
+
+.DS_Store
+*.iml
+*.java

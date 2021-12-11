@@ -1,0 +1,26 @@
+{
+  "name": "riscos-outline-fonts",
+  "version": "1.0.0",
+  "description": "Library for reading RISC OS outline fonts",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "lint": "npx eslint src",
+    "lint:fix": "npx eslint src --fix"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/RichardBrown384/riscos-outline-fonts-js.git"
+  },
+  "author": "Richard Brown",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/RichardBrown384/riscos-outline-fonts-js/issues"
+  },
+  "homepage": "https://github.com/RichardBrown384/riscos-outline-fonts-js#readme",
+  "devDependencies": {
+    "eslint": "^8.4.1",
+    "eslint-config-airbnb-base": "^15.0.0",
+    "eslint-plugin-import": "^2.25.3"
+  }
+}
