@@ -91,7 +91,13 @@ function parseMetrics(view, position = 0) {
   const flags = d.getUint8();
   const nHigh = d.getUint8();
 
-  check(version === 2, `Metric version ${version} is not supported.`);
+  check([0, 2].includes(version), `Metric version ${version} is not supported.`);
+  if (version === 0) {
+    check(
+      flags === 0 && nHigh === 0,
+      'Version 0 files must have 0 flags and no more than 256 characters defined',
+    );
+  }
 
   const n = logicalShiftLeft(nHigh, 8) + nLow;
 
