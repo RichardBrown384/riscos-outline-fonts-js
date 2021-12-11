@@ -31,6 +31,10 @@ function has16BitKernCharacters(flags) {
 }
 
 function parseMiscellaneous(view, position, flags) {
+  if (position >= view.byteLength) {
+    return {};
+  }
+
   const d = new DataPacket(view, position);
 
   return {
@@ -53,17 +57,15 @@ function parseMiscellaneous(view, position, flags) {
 }
 
 function parseKerningPairs(view, position, flags) {
+  if (position >= view.byteLength) {
+    return {};
+  }
+
   const d = new DataPacket(view, position);
 
-  function getUint8() {
-    return d.getUint8();
+  function getCharCode() {
+    return has16BitKernCharacters(flags) ? d.getInt16() : d.getUint8();
   }
-
-  function getUint16() {
-    return d.getUint16();
-  }
-
-  const getCharCode = has16BitKernCharacters(flags) ? getUint16 : getUint8;
 
   const pairs = {};
   for (let leftCode = getCharCode(); leftCode !== 0; leftCode = getCharCode()) {
@@ -134,14 +136,15 @@ function parseMetrics(view, position = 0) {
     }
   }
 
-  const extraData = {};
+  let miscellaneous = {};
+  let kerning = {};
   if (hasDataAfterMetrics(flags)) {
     const tablePosition = d.position();
     const offsetMiscellaneous = d.getUint16();
     const offsetKerning = d.getUint16();
 
-    extraData.miscellaneous = parseMiscellaneous(view, tablePosition + offsetMiscellaneous, flags);
-    extraData.kerning = parseKerningPairs(view, tablePosition + offsetKerning, flags);
+    miscellaneous = parseMiscellaneous(view, tablePosition + offsetMiscellaneous, flags);
+    kerning = parseKerningPairs(view, tablePosition + offsetKerning, flags);
   }
 
   return {
@@ -156,7 +159,8 @@ function parseMetrics(view, position = 0) {
     boundingBoxes,
     xOffsets,
     yOffsets,
-    ...extraData,
+    miscellaneous,
+    kerning,
   };
 }
 
