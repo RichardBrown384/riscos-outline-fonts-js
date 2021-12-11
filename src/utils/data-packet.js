@@ -9,10 +9,6 @@ DataPacket.prototype.position = function () {
   return this.p;
 };
 
-DataPacket.prototype.skip = function (n) {
-  this.p += n;
-};
-
 DataPacket.prototype.getUint8 = function () {
   this.p += 1;
   return this.view.getUint8(this.p - 1);
