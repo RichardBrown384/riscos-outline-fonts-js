@@ -129,10 +129,22 @@ function parseCharacter(view, position) {
   };
 }
 
-function parseChunk(view, position, chunkCount) {
+function parseChunk(view, position, version, chunkCount, dependencyByteCount) {
   const d = new DataPacket(view, position);
 
-  const chunkFlags = d.getUint32();
+  function parseChunkFlags() {
+    if (version < 6) {
+      return 0;
+    }
+    if (version < 7) {
+      return 0x80;
+    }
+    return d.getUint32();
+  }
+
+  const chunkFlags = parseChunkFlags();
+
+  const hasDependencyBytes = isBitSet(chunkFlags, 7);
 
   const characterOffsetStart = d.position();
   const charOffsets = [];
@@ -140,10 +152,11 @@ function parseChunk(view, position, chunkCount) {
     charOffsets.push(d.getUint32());
   }
 
-  const dependencyByteCount = Math.trunc((chunkCount + 7) / 8);
   const dependencyBytes = [];
-  for (let i = 0; i < dependencyByteCount; i += 1) {
-    dependencyBytes.push(d.getUint8());
+  if (hasDependencyBytes) {
+    for (let i = 0; i < dependencyByteCount; i += 1) {
+      dependencyBytes.push(d.getUint8());
+    }
   }
 
   const characters = {};
@@ -163,7 +176,7 @@ function parseChunk(view, position, chunkCount) {
   };
 }
 
-function parseChunks(view, position, chunkCount) {
+function parseChunks(view, position, version, chunkCount) {
   const d = new DataPacket(view, position);
 
   const chunkOffsets = [];
@@ -174,7 +187,7 @@ function parseChunks(view, position, chunkCount) {
   const chunks = {};
   for (let i = 0; i < chunkCount - 1; i += 1) {
     if (chunkOffsets[i] !== chunkOffsets[i + 1]) {
-      chunks[i] = parseChunk(view, chunkOffsets[i], chunkCount);
+      chunks[i] = parseChunk(view, chunkOffsets[i], version, chunkCount);
     }
   }
 
@@ -269,25 +282,52 @@ function parseOutlines(view, position = 0) {
 
   check(magic === 'FONT', 'Incorrect file signature, expected FONT');
   check(bpp === 0, 'Bitmap outline, expected outlines');
-  check(version === 8, 'Only version 8 outlines supported');
+  check([6, 7, 8].includes(version), 'Only version 6, 7, and 8 outlines supported');
+
+  function parseBoundingBox() {
+    return {
+      x0: d.getInt16(),
+      y0: d.getInt16(),
+      width: d.getInt16(),
+      height: d.getInt16(),
+    };
+  }
+
+  function parseChunkAndScaffoldInformation() {
+    if (version < 8) {
+      return {
+        chunkIndexOffset: d.position(),
+        chunkCount: 8,
+        scaffoldIndexOffset: d.position() + 36,
+        scaffoldIndexcount: 256,
+        scaffoldFlags: 0,
+      };
+    }
+    return {
+      chunkIndexOffset: d.getUint32(),
+      chunkCount: d.getUint32(),
+      scaffoldIndexOffset: d.position() + 28,
+      scaffoldIndexCount: d.getUint32(),
+      scaffoldFlags: d.getUint32(),
+    };
+  }
 
   const designSize = d.getUint16();
 
-  const x0 = d.getInt16();
-  const y0 = d.getInt16();
-  const width = d.getInt16();
-  const height = d.getInt16();
+  const boundingBox = parseBoundingBox();
 
-  const chunkIndexOffset = d.getUint32();
-  const chunkCount = d.getUint32();
-  const scaffoldIndexCount = d.getUint32();
-  const scaffoldFlags = d.getUint32();
+  const {
+    chunkIndexOffset,
+    chunkCount,
+    scaffoldIndexOffset,
+    scaffoldIndexCount,
+    scaffoldFlags,
+  } = parseChunkAndScaffoldInformation();
 
-  d.skip(20);
+  const scaffold = parseScaffold(view, scaffoldIndexOffset, scaffoldIndexCount, scaffoldFlags);
 
-  const scaffold = parseScaffold(view, d.position(), scaffoldIndexCount, scaffoldFlags);
-
-  const chunks = parseChunks(view, chunkIndexOffset, chunkCount);
+  const dependencyByteCount = Math.trunc((chunkCount + 7) / 8);
+  const chunks = parseChunks(view, chunkIndexOffset, version, chunkCount, dependencyByteCount);
 
   return {
     header: {
@@ -295,9 +335,7 @@ function parseOutlines(view, position = 0) {
       bpp,
       version,
       designSize,
-      boundingBox: {
-        x0, y0, width, height,
-      },
+      boundingBox,
     },
     scaffold,
     chunks,
