@@ -338,6 +338,7 @@ function parseOutlines(view, position = 0) {
       boundingBox,
     },
     scaffold,
+    chunkCount,
     chunks,
   };
 }
