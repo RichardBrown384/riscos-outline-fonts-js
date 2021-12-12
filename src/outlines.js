@@ -185,7 +185,7 @@ function parseChunks(view, position, version, chunkCount) {
   }
 
   const chunks = {};
-  for (let i = 0; i < chunkCount - 1; i += 1) {
+  for (let i = 0; i < chunkCount; i += 1) {
     if (chunkOffsets[i] !== chunkOffsets[i + 1]) {
       chunks[i] = parseChunk(view, chunkOffsets[i], version, chunkCount);
     }
