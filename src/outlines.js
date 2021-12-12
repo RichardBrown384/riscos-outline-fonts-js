@@ -299,7 +299,7 @@ function parseOutlines(view, position = 0) {
         chunkIndexOffset: d.position(),
         chunkCount: 8,
         scaffoldIndexOffset: d.position() + 36,
-        scaffoldIndexcount: 256,
+        scaffoldIndexCount: 256,
         scaffoldFlags: 0,
       };
     }
