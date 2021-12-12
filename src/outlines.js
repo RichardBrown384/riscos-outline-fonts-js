@@ -284,45 +284,28 @@ function parseOutlines(view, position = 0) {
   check(bpp === 0, 'Bitmap outline, expected outlines');
   check([6, 7, 8].includes(version), 'Only version 6, 7, and 8 outlines supported');
 
-  function parseBoundingBox() {
-    return {
-      x0: d.getInt16(),
-      y0: d.getInt16(),
-      width: d.getInt16(),
-      height: d.getInt16(),
-    };
-  }
-
-  function parseChunkAndScaffoldInformation() {
-    if (version < 8) {
-      return {
-        chunkIndexOffset: d.position(),
-        chunkCount: 8,
-        scaffoldIndexOffset: d.position() + 36,
-        scaffoldIndexCount: 256,
-        scaffoldFlags: 0,
-      };
-    }
-    return {
-      chunkIndexOffset: d.getUint32(),
-      chunkCount: d.getUint32(),
-      scaffoldIndexOffset: d.position() + 28,
-      scaffoldIndexCount: d.getUint32(),
-      scaffoldFlags: d.getUint32(),
-    };
-  }
-
   const designSize = d.getUint16();
 
-  const boundingBox = parseBoundingBox();
+  const boundingBox = {
+    x0: d.getInt16(),
+    y0: d.getInt16(),
+    width: d.getInt16(),
+    height: d.getInt16(),
+  };
 
-  const {
-    chunkIndexOffset,
-    chunkCount,
-    scaffoldIndexOffset,
-    scaffoldIndexCount,
-    scaffoldFlags,
-  } = parseChunkAndScaffoldInformation();
+  let chunkIndexOffset = d.position();
+  let chunkCount = 8;
+
+  const scaffoldIndexOffset = d.position() + 36;
+  let scaffoldIndexCount = 256;
+  let scaffoldFlags = 0;
+
+  if (version > 7) {
+    chunkIndexOffset = d.getUint32();
+    chunkCount = d.getUint32();
+    scaffoldIndexCount = d.getUint32();
+    scaffoldFlags = d.getUint32();
+  }
 
   const scaffold = parseScaffold(view, scaffoldIndexOffset, scaffoldIndexCount, scaffoldFlags);
 
