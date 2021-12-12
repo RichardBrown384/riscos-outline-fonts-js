@@ -129,7 +129,7 @@ function parseCharacter(view, position) {
   };
 }
 
-function parseChunk(view, position, version, chunkCount, dependencyByteCount) {
+function parseChunk(view, position, version, dependencyByteCount) {
   const d = new DataPacket(view, position);
 
   function parseChunkFlags() {
@@ -176,7 +176,7 @@ function parseChunk(view, position, version, chunkCount, dependencyByteCount) {
   };
 }
 
-function parseChunks(view, position, version, chunkCount) {
+function parseChunks(view, position, version, chunkCount, dependencyByteCount) {
   const d = new DataPacket(view, position);
 
   const chunkOffsets = [];
@@ -187,7 +187,7 @@ function parseChunks(view, position, version, chunkCount) {
   const chunks = {};
   for (let i = 0; i < chunkCount; i += 1) {
     if (chunkOffsets[i] !== chunkOffsets[i + 1]) {
-      chunks[i] = parseChunk(view, chunkOffsets[i], version, chunkCount);
+      chunks[i] = parseChunk(view, chunkOffsets[i], version, dependencyByteCount);
     }
   }
 
